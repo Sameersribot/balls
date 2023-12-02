@@ -545,7 +545,7 @@ MonoBehaviour:
   carSpeed: 10
   particles: {fileID: 8909243301679142539, guid: dadc99fa6955ad3478d0fba3497937cd, type: 3}
   joystick: {fileID: 601264272000808571}
-  speed: 0.5
+  speed: 0.23
 --- !u!58 &8458573663165588215
 CircleCollider2D:
   m_ObjectHideFlags: 0

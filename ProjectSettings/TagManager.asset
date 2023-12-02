@@ -6,6 +6,13 @@ TagManager:
   tags:
   - obstacle
   - joystick
+  - finish2
+  - finish3
+  - finish1
+  - bound
+  - finish4
+  - finish5
+  - finish6
   layers:
   - Default
   - TransparentFX
@@ -14,7 +21,7 @@ TagManager:
   - Water
   - UI
   - canvas
-  - 
+  - canvasusername
   - 
   - 
   - 
