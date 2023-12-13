@@ -12,7 +12,10 @@ TagManager:
   - bound
   - finish4
   - finish5
-  - finish6
+  - red
+  - blue
+  - green
+  - yellow
   layers:
   - Default
   - TransparentFX
