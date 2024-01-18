@@ -16,6 +16,9 @@ TagManager:
   - blue
   - green
   - yellow
+  - finish6
+  - finish7
+  - ground
   layers:
   - Default
   - TransparentFX

@@ -9,7 +9,7 @@ using UnityEngine.Rendering.PostProcessing;
 public class playerControls : MonoBehaviour
 {
     public float carSpeed = 10.0f;
-    public GameObject particles, mainCanvas ,joystickCanvas, volumePost;
+    public GameObject particles, mainCanvas ,joystickCanvas, volumePost, speedingEfct;
     public Joystick joystick;
     private int lives = 2, levl;
     public GameObject[] heart;
@@ -31,10 +31,11 @@ public class playerControls : MonoBehaviour
     public float acceleration = 2f;
     public Slider slider;
     public float vignetteIncreaseRate = 0.1f;
-    private float virgenetteInitial;
+    private float virgenetteInitial, bloomInitial;
     private bool isTouchingScreen = false;
-    private PostProcessVolume postProcessVolume;
+    public PostProcessVolume postProcessVolume;
     private Vignette vignette;
+    private Bloom bloom;
 
     void Start()
     {
@@ -46,6 +47,7 @@ public class playerControls : MonoBehaviour
         slider.value = 1;
         sprite = gameObject.GetComponent<SpriteRenderer>();
         trail = gameObject.GetComponent<TrailRenderer>();
+        mainCanvas.SetActive(true);
         
         // Get the Rigidbody2D component attached to the GameObject
         rb = GetComponent<Rigidbody2D>();
@@ -55,6 +57,8 @@ public class playerControls : MonoBehaviour
         {
             postProcessVolume.profile.TryGetSettings(out vignette);
             virgenetteInitial = vignette.intensity.value;
+            postProcessVolume.profile.TryGetSettings(out bloom);
+            bloomInitial = bloom.intensity.value;
         }
         else
         {
@@ -72,10 +76,14 @@ public class playerControls : MonoBehaviour
         movement.Normalize();
         foreach(GameObject obstacle in obstacles)
         {
-            obstacle.transform.Rotate(new Vector3(0f, 0f, 5f));
+            obstacle.transform.Rotate(new Vector3(0f, 0f, 0.5f));
         }
         Move(movement);
         power();
+        if(Input.touchCount > 2)
+        {
+            SceneManager.LoadScene("level3");
+        }
     }
 
     void Move(Vector2 direction)
@@ -96,29 +104,45 @@ public class playerControls : MonoBehaviour
         }
         else if (collision.gameObject.tag == "finish1")
         {
+            FindObjectOfType<AudioMnagaer>().Play("levelcmplt");
             transform.position = new Vector2(75.1f, 153f);
             levl = 1;
+            bloom.intensity.value += 10f;
+            Invoke("finish", 0.8f);
         }
         else if (collision.gameObject.tag == "finish2")
         {
+            FindObjectOfType<AudioMnagaer>().Play("levelcmplt");
             transform.position = new Vector2(76.1f, 290f);
             levl = 2;
+            Invoke("finish", 0.8f);
         }
         else if (collision.gameObject.tag == "finish3")
         {
+            FindObjectOfType<AudioMnagaer>().Play("levelcmplt");
             transform.position = new Vector2(76.1f, 347f);
             levl = 3;
+            Invoke("finish", 0.8f);
         }
         else if (collision.gameObject.tag == "finish4")
         {
+            FindObjectOfType<AudioMnagaer>().Play("levelcmplt");
             transform.position = new Vector2(76.1f, 393f);
             levl = 4;
+            Invoke("finish", 0.8f);
         }
         else if (collision.gameObject.tag == "finish5")
         {
+            FindObjectOfType<AudioMnagaer>().Play("levelcmplt");
             SceneManager.LoadScene("levl2");
+            
         }
-
+        else if (collision.gameObject.tag == "finish6")
+        {
+            FindObjectOfType<AudioMnagaer>().Play("levelcmplt");
+            SceneManager.LoadScene("level3");
+            
+        }
     }
     private void ReflectBounce(Vector2 normal)
     {
@@ -176,6 +200,7 @@ public class playerControls : MonoBehaviour
             if (touch.phase == TouchPhase.Began)
             {
                 isTouchingScreen = true;
+                FindObjectOfType<AudioMnagaer>().Play("power");
             }
             else if (touch.phase == TouchPhase.Ended)
             {
@@ -198,9 +223,8 @@ public class playerControls : MonoBehaviour
     {
         if (isTouchingScreen)
         {
-            FindObjectOfType<AudioMnagaer>().Play("power");
             rb.velocity = new Vector2(rb.velocity.x * acceleration + Time.deltaTime, rb.velocity.y + acceleration + Time.deltaTime);
-            slider.value -= Time.deltaTime * 0.1f;
+            slider.value -= Time.deltaTime * 0.2f;
             // Clamp speed to maxSpeed
         }
         else
@@ -220,7 +244,7 @@ public class playerControls : MonoBehaviour
         {
             // Clamp vignette intensity to a maximum value if needed
             vignette.intensity.value = Mathf.Min(vignette.intensity.value, 1f);
-
+            speedingEfct.SetActive(true);
             // Increase the vignette intensity
             vignette.intensity.value += 0.05f;
         }
@@ -228,6 +252,7 @@ public class playerControls : MonoBehaviour
         {
             // Clamp vignette intensity to a maximum value if needed
             vignette.intensity.value = Mathf.Min(vignette.intensity.value, 0.5f);
+            speedingEfct.SetActive(true);
 
             // Increase the vignette intensity
             vignette.intensity.value += 0.05f;
@@ -236,7 +261,7 @@ public class playerControls : MonoBehaviour
         {
             // Reset vignette intensity when not touching the screen
             vignette.intensity.value = virgenetteInitial;
-
+            speedingEfct.SetActive(false);
         }
     }
     public void restart()
@@ -269,5 +294,9 @@ public class playerControls : MonoBehaviour
         {
             restart();
         }
+    }
+    void finish()
+    {
+        bloom.intensity.value = bloomInitial;
     }
 }
