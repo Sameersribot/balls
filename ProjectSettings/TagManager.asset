@@ -19,6 +19,7 @@ TagManager:
   - finish6
   - finish7
   - ground
+  - lvl3
   layers:
   - Default
   - TransparentFX

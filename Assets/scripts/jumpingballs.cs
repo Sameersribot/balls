@@ -5,18 +5,27 @@ using UnityEngine;
 public class jumpingballs : MonoBehaviour
 {
     private Rigidbody2D rb;
-    private Vector3 initialpos;
+    public GameObject obsRed, redBall, z;
+    private Vector3 initialpos, fixedPos;
+    private bool isFixed;
     // Start is called before the first frame update
     void Start()
     {
         initialpos = transform.position;
         rb = gameObject.GetComponent<Rigidbody2D>();
+
+        isFixed = false;
+        InvokeRepeating("ballInstantiate", 2f, 1f);
     }
 
     // Update is called once per frame
     void Update()
     {
         
+        if (isFixed)
+        {
+            gameObject.transform.position = fixedPos;
+        }
     }
     private void OnCollisionEnter2D(Collision2D collision)
     {
@@ -29,4 +38,20 @@ public class jumpingballs : MonoBehaviour
             transform.position = initialpos;
         }
     }
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.gameObject.tag == "blue")
+        {
+            fixedPos= collision.gameObject.transform.position;
+            isFixed = true;
+            obsRed.SetActive(false);
+        }
+        
+    }
+    void ballInstantiate()
+    {
+        GameObject game =  Instantiate(redBall, z.transform.position, Quaternion.identity);
+        Destroy(game, 9f);
+    }
+    
 }

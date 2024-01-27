@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
+using Cinemachine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Audio;
 using UnityEngine.UI;
@@ -12,14 +13,15 @@ public class playerControls : MonoBehaviour
     public GameObject particles, mainCanvas ,joystickCanvas, volumePost, speedingEfct;
     public Joystick joystick;
     private int lives = 2, levl;
+    //public CinemachineCameraOffset cinemachine;
     public GameObject[] heart;
     private float movementx, movementY;
-    private Vector2 touchStartPos;
+    private Vector2 currentDirection, touchStartPos, movement;
     private float initialY;
     SpriteRenderer sprite;
     TrailRenderer trail;
     public float sensitivity = 0.02f;
-    public float speed, rotateSpeed;
+    public float speed, rotationSpeed;
     public float bounceForce = 5f; // Adjust this value to control the bounce force
     private Rigidbody2D rb;
     private Vector2 pose;
@@ -31,11 +33,26 @@ public class playerControls : MonoBehaviour
     public float acceleration = 2f;
     public Slider slider;
     public float vignetteIncreaseRate = 0.1f;
-    private float virgenetteInitial, bloomInitial;
+    private float virgenetteInitial, bloomInitial, chromaticInitial;
     private bool isTouchingScreen = false;
     public PostProcessVolume postProcessVolume;
     private Vignette vignette;
     private Bloom bloom;
+    private ChromaticAberration chromatic;
+
+    // Intensity of the shake
+    public float shakeIntensity = 1f;
+
+    // Duration of the shake in seconds
+    public float shakeDuration = 1f;
+
+
+    private CinemachineImpulseSource impulseSource;
+
+
+    private void Awake()
+    {
+    }
 
     void Start()
     {
@@ -43,12 +60,15 @@ public class playerControls : MonoBehaviour
         initialpos = 390f;
         finalpos = 427f;
         skincolor = 4;
+        rotationSpeed = 20f;
         levl = 0;
         slider.value = 1;
         sprite = gameObject.GetComponent<SpriteRenderer>();
         trail = gameObject.GetComponent<TrailRenderer>();
+        impulseSource = GetComponent<CinemachineImpulseSource>();
         mainCanvas.SetActive(true);
-        
+        // Save the original position of the camera
+
         // Get the Rigidbody2D component attached to the GameObject
         rb = GetComponent<Rigidbody2D>();
         postProcessVolume = volumePost.GetComponent<PostProcessVolume>();
@@ -59,6 +79,8 @@ public class playerControls : MonoBehaviour
             virgenetteInitial = vignette.intensity.value;
             postProcessVolume.profile.TryGetSettings(out bloom);
             bloomInitial = bloom.intensity.value;
+            postProcessVolume.profile.TryGetSettings(out chromatic);
+            chromaticInitial = chromatic.intensity.value;
         }
         else
         {
@@ -72,7 +94,7 @@ public class playerControls : MonoBehaviour
         movementx = joystick.Horizontal;
         movementY = joystick.Vertical;
         // Iterate through all the active touches
-        Vector2 movement = new Vector2(movementx, movementY);
+        movement = new Vector2(movementx, movementY);
         movement.Normalize();
         foreach(GameObject obstacle in obstacles)
         {
@@ -90,6 +112,10 @@ public class playerControls : MonoBehaviour
     {
         // Apply movement using the Rigidbody2D component
         rb.velocity = new Vector2(direction.x * speed, direction.y * speed);
+        currentDirection = Vector2.Lerp(currentDirection, movement.normalized, rotationSpeed * Time.fixedDeltaTime);
+        float angle = Mathf.Atan2(currentDirection.y, currentDirection.x) * Mathf.Rad2Deg;
+        Quaternion targetRotation = Quaternion.Euler(0f, 0f, angle);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.fixedDeltaTime);
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -143,6 +169,12 @@ public class playerControls : MonoBehaviour
             SceneManager.LoadScene("level3");
             
         }
+        else if (collision.gameObject.tag == "finish7")
+        {
+            FindObjectOfType<AudioMnagaer>().Play("levelcmplt");
+            SceneManager.LoadScene("level4");
+
+        }
     }
     private void ReflectBounce(Vector2 normal)
     {
@@ -179,8 +211,8 @@ public class playerControls : MonoBehaviour
         trail.startColor = colur;
         trail.endColor = Color.white;
         skincolor = 4;
-    }*/
-    
+    }
+    */
     public void clickPause()
     {
         mainCanvas.SetActive(false);
@@ -243,24 +275,32 @@ public class playerControls : MonoBehaviour
         if (isTouchingScreen && vignette != null)
         {
             // Clamp vignette intensity to a maximum value if needed
-            vignette.intensity.value = Mathf.Min(vignette.intensity.value, 1f);
+            vignette.intensity.value = Mathf.Min(vignette.intensity.value, 0.55f);
             speedingEfct.SetActive(true);
-            // Increase the vignette intensity
+            camerashakemanager.instance.cameraShake(impulseSource);          // Increase the vignette intensity
             vignette.intensity.value += 0.05f;
+            chromatic.intensity.value = Mathf.Min(chromatic.intensity.value, 0.65f);
+            chromatic.intensity.value += 0.05f;
         }
         else if(Input.GetButton("Jump") && vignette != null)
         {
             // Clamp vignette intensity to a maximum value if needed
-            vignette.intensity.value = Mathf.Min(vignette.intensity.value, 0.5f);
+            vignette.intensity.value = Mathf.Min(vignette.intensity.value, 0.35f);
             speedingEfct.SetActive(true);
+            camerashakemanager.instance.cameraShake(impulseSource);          // Increase the vignette intensity
 
-            // Increase the vignette intensity
+            chromatic.intensity.value = Mathf.Min(chromatic.intensity.value, 0.65f);
+            chromatic.intensity.value += 0.05f;
+
+            // Increase the vignette intensity 
             vignette.intensity.value += 0.05f;
+            
         }
         else if (vignette != null)
         {
             // Reset vignette intensity when not touching the screen
             vignette.intensity.value = virgenetteInitial;
+            chromatic.intensity.value = chromaticInitial;
             speedingEfct.SetActive(false);
         }
     }
@@ -299,4 +339,5 @@ public class playerControls : MonoBehaviour
     {
         bloom.intensity.value = bloomInitial;
     }
+    // Function to start the camera shake
 }
