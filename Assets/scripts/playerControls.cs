@@ -4,13 +4,15 @@ using UnityEngine;
 using DG.Tweening;
 using Cinemachine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Sprites;
 using UnityEngine.Audio;
 using UnityEngine.UI;
 using UnityEngine.Rendering.PostProcessing;
+
 public class playerControls : MonoBehaviour
 {
     public float carSpeed = 10.0f;
-    public GameObject particles, mainCanvas ,joystickCanvas, volumePost, speedingEfct;
+    public GameObject particles, mainCanvas ,joystickCanvas, volumePost, speedingEfct, sprite_boundary;
     public Joystick joystick;
     private int lives = 2, levl;
     //public CinemachineCameraOffset cinemachine;
@@ -18,7 +20,8 @@ public class playerControls : MonoBehaviour
     private float movementx, movementY;
     private Vector2 currentDirection, touchStartPos, movement;
     private float initialY;
-    SpriteRenderer sprite;
+    private SpriteRenderer sprite;
+    public Color boundary_color;
     TrailRenderer trail;
     public float sensitivity = 0.02f;
     public float speed, rotationSpeed;
@@ -46,13 +49,7 @@ public class playerControls : MonoBehaviour
     // Duration of the shake in seconds
     public float shakeDuration = 1f;
 
-
-    private CinemachineImpulseSource impulseSource;
-
-
-    private void Awake()
-    {
-    }
+    public CinemachineImpulseSource impulseSource_speeding, impulseSource_out;
 
     void Start()
     {
@@ -63,9 +60,10 @@ public class playerControls : MonoBehaviour
         rotationSpeed = 20f;
         levl = 0;
         slider.value = 1;
-        sprite = gameObject.GetComponent<SpriteRenderer>();
         trail = gameObject.GetComponent<TrailRenderer>();
-        impulseSource = GetComponent<CinemachineImpulseSource>();
+        sprite = sprite_boundary.GetComponent<SpriteRenderer>();
+        sprite.DOColor(boundary_color, 1f).SetLoops(-1, LoopType.Yoyo);
+        impulseSource_speeding = GetComponent<CinemachineImpulseSource>();
         mainCanvas.SetActive(true);
         // Save the original position of the camera
 
@@ -126,6 +124,7 @@ public class playerControls : MonoBehaviour
             lives--;
             Destroy(heart[lives]);
             FindObjectOfType<AudioMnagaer>().Play("restart");
+            camerashakemanager.instance.cameraShake(impulseSource_out);
             Instantiate(particles, transform.position, Quaternion.identity);
         }
         else if (collision.gameObject.tag == "finish1")
@@ -175,6 +174,10 @@ public class playerControls : MonoBehaviour
             SceneManager.LoadScene("level4");
 
         }
+        else if(collision.gameObject.tag == "cheat_code_4")
+        {
+            SceneManager.LoadScene("level4");
+        }
     }
     private void ReflectBounce(Vector2 normal)
     {
@@ -216,11 +219,13 @@ public class playerControls : MonoBehaviour
     public void clickPause()
     {
         mainCanvas.SetActive(false);
+        FindObjectOfType<AudioMnagaer>().Play("button_click");
         joystickCanvas.SetActive(true);
     }
     public void clickPlay()
     {
         mainCanvas.SetActive(true);
+        FindObjectOfType<AudioMnagaer>().Play("button_click");
         joystickCanvas.SetActive(false);
     }
     void power()
@@ -277,7 +282,7 @@ public class playerControls : MonoBehaviour
             // Clamp vignette intensity to a maximum value if needed
             vignette.intensity.value = Mathf.Min(vignette.intensity.value, 0.55f);
             speedingEfct.SetActive(true);
-            camerashakemanager.instance.cameraShake(impulseSource);          // Increase the vignette intensity
+            camerashakemanager.instance.cameraShake(impulseSource_speeding);          // Increase the vignette intensity
             vignette.intensity.value += 0.05f;
             chromatic.intensity.value = Mathf.Min(chromatic.intensity.value, 0.65f);
             chromatic.intensity.value += 0.05f;
@@ -287,7 +292,7 @@ public class playerControls : MonoBehaviour
             // Clamp vignette intensity to a maximum value if needed
             vignette.intensity.value = Mathf.Min(vignette.intensity.value, 0.35f);
             speedingEfct.SetActive(true);
-            camerashakemanager.instance.cameraShake(impulseSource);          // Increase the vignette intensity
+            camerashakemanager.instance.cameraShake(impulseSource_speeding);          // Increase the vignette intensity
 
             chromatic.intensity.value = Mathf.Min(chromatic.intensity.value, 0.65f);
             chromatic.intensity.value += 0.05f;
